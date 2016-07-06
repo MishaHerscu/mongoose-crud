@@ -13,23 +13,70 @@ const done = function() {
 };
 
 const create = function(givenName, surname, dob, gender, height, weight) {
-  /* Add Code Here */
+  Person.create({
+    'name.given': givenName,
+    'name.surname': surname,
+    dob: dob,
+    gender: gender,
+    height: height,
+    weight: weight
+  }).then((person) => {
+    console.log(person.toJSON());
+  }).catch(console.error)
+  .then(done);
 };
 
 const index = function() {
-  /* Add Code Here */
+  let search = {};
+  if (arguments[0] && arguments[1]) {
+    let field = arguments[0];
+    let criterion = arguments[1];
+    if (criterion[0] === '/') {   // If a regular expression
+      let regex = new RegExp(criterion.slice(1, criterion.length - 1));
+      search[field] = regex;
+    } else {                      // If not a regular expression
+      search[field] = criterion;
+    }
+  }
+  Person.find(search)
+  .then((people) => {
+    people.forEach((person) => {
+      console.log(person.toJSON());
+    });
+  })
+  .catch(console.error)
+  .then(done);
 };
 
 const show = function(id) {
-  /* Add Code Here */
+  Person.findById(id)
+  .then((person) => {
+    console.log(person.toJSON());
+  }).catch(console.error)
+  .then(done);
 };
 
-const update = function(id, field, value) {
-  /* Add Code Here */
+const update = (id, field, value) => {
+  let modify = {};
+  modify[field] = value;
+  Person.findById(id)
+    .then((person) => {
+      person.set(field, value);
+      return person.save();
+    }).then(function(person) {
+      console.log(person.toJSON());
+    }).catch(console.error)
+    .then(done);
 };
 
-const destroy = function(id) {
-  /* Add Code Here */
+
+const destroy = (id) => {
+  Person.findById(id)
+  .then((person) => {
+    person.remove();
+  })
+  .catch(console.error)
+  .then(done);
 };
 
 db.once('open', function() {
@@ -52,6 +99,17 @@ db.once('open', function() {
       } else {
         console.log('usage c <given_name> <surname> <date of birth> [gender], <height>, <weight>');
         done();
+      }
+      break;
+
+    case 'search':
+      field  = process.argv[3];
+      let criterion = process.argv[4];
+      if (!criterion) {
+        console.log('usage: search <field> <criterion>');
+        done();
+      } else {
+        index(field, criterion);
       }
       break;
 
